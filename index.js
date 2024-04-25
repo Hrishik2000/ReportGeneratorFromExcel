@@ -10,8 +10,25 @@ const app = express();
 app.use(cors());
 app.use(fileUpload());
 
-app.get("/data", (req, res) => {
+const tempDir = path.join(__dirname, "temp");
+
+// Function to delete the temporary folder
+const deleteTempFolder = () => {
+  if (fs.existsSync(tempDir)) {
+    fs.rmSync(tempDir, { recursive: true });
+    // console.log("Temporary folder deleted.");
+  }
+};
+
+// Delete the temporary folder when the server starts
+//deleteTempFolder();
+
+app.get("/", (req, res) => {
   const folderPath = "./temp/sortedData";
+
+  if (!fs.existsSync(folderPath)) {
+    return res.status(404).json({ error: "Sorted data folder not found" });
+  }
 
   GetParameters(folderPath, (err, finalData) => {
     if (err) {
@@ -19,12 +36,16 @@ app.get("/data", (req, res) => {
       res.status(500).json({ error: "Unable to get data" });
       return;
     }
-
     res.json(finalData);
+
+    // Delete the temporary folder after sending the response
+    deleteTempFolder();
+
+   
   });
 });
 
-app.post("/upload", (req, res) => {
+app.post("/", (req, res) => {
   if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).send("No files were uploaded.");
   }
@@ -32,7 +53,6 @@ app.post("/upload", (req, res) => {
   const uploadedFile = req.files.file;
 
   // Create a temporary directory to extract the zip contents
-  const tempDir = path.join(__dirname, "temp");
   if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir);
   }
@@ -56,14 +76,6 @@ app.post("/upload", (req, res) => {
         res.status(500).json({ error: "Unable to process uploaded files" });
         return;
       }
-
-      // Remove the temporary directory and files
-      fs.rmdir(tempDir, { recursive: true }, (err) => {
-        if (err) {
-          console.error("Error deleting temporary directory:", err);
-        }
-      });
-
       res.json(finalData);
     });
   });

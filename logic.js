@@ -102,16 +102,24 @@ if (minCurrentForScan1 > minCurrentForScan2) {
   finalOutputVoltage = corresponsingVoltageToMinCurrentScan1;
 }
 
+let result = "";
+if(finalOutputCurrent > -12 ){
+  result= 'Negative';
+}else if( finalOutputCurrent > -15 && finalOutputCurrent <= -12){
+  result= 'W-Positive';
+}else{
+  result= 'Positive';
+}
+
 const speciesName = path.basename(file, ".xlsx");
 const speciesData = {
   current: finalOutputCurrent,
   voltage: finalOutputVoltage,
+  status : result
 };
+
+//console.log(speciesData);
 finalData[speciesName] = speciesData;
-
-
-
-
 
         // Once all files are processed, invoke the callback with finalData
         if (index === files.length - 1) {
